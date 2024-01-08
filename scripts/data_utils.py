@@ -1,104 +1,8 @@
 from h3xsemble.utils.rigid_utils import Rigid, Rotation
-import torch, pickle,random
-#with open('manual_cut_region_for_safe_kabsch
-modi_dic={}
-modi_dic['3upc_G_#_#']=[ ['backward',-13] ]
-modi_dic['6pk8_A_a_#'] =[['case2']]
-modi_dic['6pk8_C_c_#'] =[['case2']]
-modi_dic['5j74_B_b_#'] =[['case2']]
-modi_dic['5aam_B_b_J'] =[['case2']]
-modi_dic['6g8r_A_a_B'] =[['case2']]
-modi_dic['5b3n_A_a_#'] =[['case2']]
-modi_dic['6k42_H_h_AB']=[['case2']]
-modi_dic['6ehy_A_a_#'] =[['case2']]
-modi_dic['6ehy_B_b_#'] =[['case2']]
-modi_dic['6oan_B_b_A'] =[['case2']]
-modi_dic['6oan_D_d_C'] =[['case2']]
-modi_dic['6xbl_S_s_AB']=[['case2']]
-modi_dic['6xbk_S_s_AB']=[['case2']]
-modi_dic['6xbj_S_s_AB']=[['case2']]
-modi_dic['6os9_D_d_AB']=[['case2']]
-modi_dic['6wha_E_e_BC']=[['case2']]
-modi_dic['6xbm_S_s_AB']=[['case2']]
-modi_dic['6k41_H_h_AB']=[['case2']]
-modi_dic['7e33_E_e_AB']=[['case2']]
-modi_dic['7cmu_E_e_AB']=[['case2']]
-modi_dic['7cmv_E_e_AB']=[['case2']]
-modi_dic['7d77_S_s_AB']=[['case2']]
-modi_dic['7deo_C_c_D'] =[['case2']]
-modi_dic['5yd3_E_e_F'] =[['case2']]
-modi_dic['5yd3_C_c_D'] =[['case2']]
-modi_dic['5yd4_E_e_F'] =[['case2']]
-modi_dic['5yd4_C_c_D'] =[['case2']]
-modi_dic['5j75_A_a_#'] =[['case2']]
-modi_dic['5j75_B_b_#'] =[['case2']]
-modi_dic['5aaw_F_f_G'] =[['case2']]
-modi_dic['7kbm_A_a_#'] =[['case1']]
-modi_dic['7kbo_A_a_#'] =[['case1']]
-modi_dic['7kbp_A_a_#'] =[['case1']]
-modi_dic['7kbp_B_b_#'] =[['case1']]
-modi_dic['7kbp_C_c_#'] =[['case1']]
-modi_dic['7kbp_D_d_#'] =[['case1']]
-modi_dic['7cu65_B_b_E']=[['case1']]
-modi_dic['7cu65_A_a_Q']=[['case1']]
-modi_dic['7ah1_A_a_#'] =[['case1']]
-modi_dic['5fcs_H_h_#'] =[['case1']]
-modi_dic['5fcs_L_l_#'] =[['case1']]
-modi_dic['5fcs_L_l_#'] =[['case1']]
-modi_dic['6kn9_E_e_B'] =[['case3']]
+import torch
+import pickle
+import random
 
-def truncate_manually_by_hu(dat,tag,mode):
-    if not tag in modi_dic.keys():
-        return dat
-    for x in modi_dic[tag]:
-        if x[0] =='point': 
-            mask1=dat['chain_id'] == x[1][0]
-            mask2=dat['hu_residue_index']>= x[1][1]
-            mask3=dat['hu_residue_index']<=x[1][2]
-            mask=mask1&mask2
-            mask=mask&mask3
-        elif x[0] =='case2':
-            mask1=dat['chain_tag']==0
-            mask2=dat['all_atom_mask'][...,1].bool() 
-            mask=mask1&mask2
-            last_true_index = torch.nonzero(mask).max()
-            result=torch.zeros_like(mask).bool()
-            result[last_true_index]=True
-            mask=result
-        elif x[0] == 'case1':
-            mask1=dat['chain_tag']==1
-            mask2=dat['all_atom_mask'][...,1].bool() 
-            mask=mask1&mask2
-        elif x[0]=='case3':
-            mask=dat['all_atom_mask'][...,1].bool()
-            mask=~mask
-        for key in dat.keys():
-            if not (('mask' in key) or ('exists' in key)):
-                continue
-            if x[0] =='backward':
-                dat[key][x[1]:]=0
-            elif x[0] =='front':
-                dat[key][:x[1]]=0
-            elif x[0] in ['point','case2','case1','case3']:
-                dat[key][mask]=0
-    return dat
-
-
-def collate_batch(dic_s):
-    tmp_dic = dic_s[0]
-    out_dic = {}
-    for key in tmp_dic.keys():
-        out_dic[key] = []
-        for dic in dic_s:
-            out_dic[key].append(dic[key].unsqueeze(0))
-        if isinstance(dic[key], torch.Tensor):
-            out_dic[key] = torch.cat(out_dic[key], dim=0)
-        elif isinstance(dic[key], Rigid):
-            out_dic[key] = dic[key].cat(out_dic[key], dim=0)
-        else:
-            print("Hmm", type(dic[key]))
-            sys.exit()
-    return out_dic
 
 
 def _read_pickle_select(
@@ -361,15 +265,9 @@ def initialize_ulr_rigid(
     new_trans = inp_gt._trans[..., 0, :]  # (C, CA, N frame)
     new_rots = inp_gt._rots._rot_mats[..., 0, :, :]
     ###########
-    """ for debugging"""
     """
     inp_gt = inp_gt.from_tensor_4x4(dic["rigidgroups_gt_frames"].clone().detach())
     # [L_tot, 8, 4, 4]
-    new_trans2 = inp_gt._trans[..., 0, :]  # (C, CA, N frame)
-    print (new_trans[0])
-    print (new_trans2[0])
-    print (new_trans-new_trans2)
-    sys.exit()
     """
     # how about just with backbone_rigid_tensor?
     ##
@@ -420,7 +318,7 @@ def initialize_ulr_rigid(
         #####
         new_trans[ulr_mask, :] = memo
         tmp_rots = ulr_rigid._rots._rot_mats
-        new_rots[ulr_mask] = tmp_rots  # 여기서는 아직 identity?
+        new_rots[ulr_mask] = tmp_rots
         #####
     new_rigid = Rigid(Rotation(rot_mats=new_rots), new_trans)
     trs_point = torch.stack(trs_point_s, dim=0).mean(dim=0)

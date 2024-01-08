@@ -60,7 +60,7 @@ def model_config(name, train=False, low_prec=False, long_sequence_inference=Fals
 
 ###
 
-seed_size =4 
+seed_size = 32 
 
 # Dataloader
 N_CROP = 100
@@ -85,9 +85,8 @@ USE_UPDATE_Z_IPA = False  # update z between IPA layers
 #USE_UPDATE_Z_IPA = [True,'naive',True] # use_update_z_ipa, update_z_ipa_mode, return_updated_z
 STOP_ROT_GRAD = False
 USE_RESET_STRUCTURE = False
-### Loss
+### Loss32USE_INTERMEDIATE_STR = False
 USE_INTERMEDIATE_STR = False
-USE_LOCAL_FAPE = False
 USE_CUMUL_CHI = False
 USE_BB_MASK = False
 USING_DISTANCE_WEIGHT = False
@@ -258,16 +257,8 @@ config = mlc.ConfigDict(
                 "use_update_z_ipa": USE_UPDATE_Z_IPA,
                 "build_str_interval": 1,
                 "no_ipa_s": len(IPA_TYPE),
-                # "ipa_type_s": [
-                #    "implicit_all_frame",
-                #    "implicit_all_frame",
-                #    "implicit_all_frame",
-                #    "implicit_all_frame",
-                # ],  # all frame added
                 "build_str_type": "torsion",  # torsion or frame
                 "ipa_type_s": IPA_TYPE,
-                # "ipa_type_s":['default','default','default_frame_both','default_frame_both']
-                # "stop_grad_rot": True,
                 "update_rigids": True,
                 "use_non_ulr": USE_NON_ULR,
                 "stop_rot_gradient": STOP_ROT_GRAD,
@@ -280,7 +271,6 @@ config = mlc.ConfigDict(
                 "no_qk_points": int(ipa_no_qk_points / ipa_enc_div),
                 "no_v_points": int(ipa_no_v_points / ipa_enc_div),
                 "no_blocks": 1,
-                # "no_blocks"   : int(ipa_no_blocks/ipa_enc_div),
                 "no_transition_layers": 2,
                 "dropout_rate": 0.1,
                 "inf": 1e5,
@@ -368,149 +358,6 @@ config = mlc.ConfigDict(
                 #    'enable_grad_res_eng':False,
                 #},
             },
-        },
-        "loss": {
-            "sel_mode": "min",
-            "seed_size": seed_size,
-            "sel_name_s": ["fape_bb", "fape_sc", "rmsd_loss"],
-            "per_name_s": [
-                "fape_bb",
-                "fape_sc",
-                "rmsd_loss",
-                "distogram",
-                "supervised_chi",
-            ],
-            "tmp_name_s": [
-                "obs_H3_rmsd",
-            ],
-            ###############################################################
-            "rmsd_loss": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 1.0,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "fape_bb": {
-                "backbone": {
-                    "clamp_distance": 10.0,
-                    "loss_unit_distance": 10.0,
-                    "weight": 1.0,
-                    "use_non_ulr": USE_NON_ULR,  ## YB added
-                    "use_local_FAPE": USE_LOCAL_FAPE,  ## YB added
-                    "use_bb_mask": USE_BB_MASK,  ## YB added
-                    "use_intermediate_str": USE_INTERMEDIATE_STR,
-                    "weight_supervised_chi": WEIGHT_SUPERVISED_CHI,
-                    "mask_bb_criteria": MASK_BB_CRITERIA,
-                    "mask_local_bb_criteria": MASK_LOCAL_BB_CRITERIA,
-                    "using_distance_weight": USING_DISTANCE_WEIGHT,
-                },
-                "eps": 1e-4,
-                "weight": 1.0,
-            },
-            "fape_sc": {
-                "sidechain": {
-                    "clamp_distance": 10.0,
-                    "length_scale": 10.0,
-                    "weight": 1.0,
-                    "use_non_ulr": USE_NON_ULR,  ## YB added
-                    "use_local_FAPE": USE_LOCAL_FAPE,  ## YB added
-                    "use_bb_mask": USE_BB_MASK,  ## YB added
-                    "using_distance_weight": USING_DISTANCE_WEIGHT,
-                },
-                "eps": 1e-4,
-                "weight": 1.0,
-            },
-            ###############################################################
-            "distogram": {
-                "min_bin": 2.3125,
-                "max_bin": 21.6875,
-                "no_bins": 64,
-                "eps": eps,  # 1e-6,
-                "weight": 0.3,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-            },
-            "supervised_chi": {
-                "chi_weight": 0.5,
-                "angle_norm_weight": 0.01,
-                "eps": EPS_CHI,  # 1e-6,
-                "weight": WEIGHT_SUPERVISED_CHI,
-                "use_bb_mask": USE_BB_MASK,  ## YB added
-                "use_cumulative_loss": USE_CUMUL_CHI,  ## YB added
-            },
-            ###############################################################
-            "plddt_loss": {
-                "min_resolution": 0.1,
-                "max_resolution": 3.0,
-                "cutoff": 15.0,
-                "no_bins": 50,
-                "eps": eps,  # 1e-10,
-                "weight": WEIGHT_PLDDT,
-                "use_non_ulr": False,  ## YB added
-            },
-            "violation": {
-                "violation_tolerance_factor": 12.0,
-                "clash_overlap_tolerance": 1.5,
-                "eps": eps,  # 1e-6,
-                "weight": WEIGHT_VIOLATION,
-            },
-            ###############################################################
-            "best_H3_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": False,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "top1_H3_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": False,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "best_ulr_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "total_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "top1_ulr_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "obs_H3_rmsd": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": False,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "prmsd_loss": {
-                "hu_mode": "bb",
-                "clamp_distance": 10.0,
-                "weight": 0.0,
-                "use_non_ulr": False,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "crossover_loss": {
-                "clamp_distance": 10.0,
-                "weight": 1.0,
-                "use_non_ulr": USE_NON_ULR,  ## YB added
-                "eps": EPS_RMSD,
-            },
-            "eps": eps,
         },
     }
 )
