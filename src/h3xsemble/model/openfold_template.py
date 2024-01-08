@@ -20,30 +20,30 @@ from typing import Optional, List
 import torch
 import torch.nn as nn
 
-from openfold.model.primitives import Linear, LayerNorm, Attention
-from openfold.model.dropout import (
+from h3xsemble.model.primitives import Linear, LayerNorm, Attention
+from h3xsemble.model.dropout import (
     DropoutRowwise,
     DropoutColumnwise,
 )
-from openfold.model.pair_transition import PairTransition
-from openfold.model.triangular_attention import (
+from h3xsemble.model.pair_transition import PairTransition
+from h3xsemble.model.triangular_attention import (
     TriangleAttentionStartingNode,
     TriangleAttentionEndingNode,
 )
-from openfold.model.triangular_multiplicative_update import (
+from h3xsemble.model.triangular_multiplicative_update import (
     TriangleMultiplicationOutgoing,
     TriangleMultiplicationIncoming,
 )
-from openfold.utils.checkpointing import checkpoint_blocks
-from openfold.utils.chunk_utils import (
+from h3xsemble.utils.checkpointing import checkpoint_blocks
+from h3xsemble.utils.chunk_utils import (
     chunk_layer,
     ChunkSizeTuner,
 )
-from openfold.utils.feats import (
+from h3xsemble.utils.feats import (
     build_template_angle_feat,
     build_template_pair_feat,
 )
-from openfold.utils.tensor_utils import (
+from h3xsemble.utils.tensor_utils import (
     add,
     permute_final_dims,
     flatten_final_dims,

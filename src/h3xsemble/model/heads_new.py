@@ -16,13 +16,13 @@
 import torch
 import torch.nn as nn
 
-from openfold.model.primitives import Linear, LayerNorm
-from openfold.utils.loss import (
+from h3xsemble.model.primitives import Linear, LayerNorm
+from h3xsemble.utils.loss import (
     compute_plddt,
     compute_tm,
     compute_predicted_aligned_error,
 )
-from openfold.utils.precision_utils import is_fp16_enabled
+from h3xsemble.utils.precision_utils import is_fp16_enabled
 
 
 class AuxiliaryHeads(nn.Module):

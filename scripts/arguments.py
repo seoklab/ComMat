@@ -1,7 +1,6 @@
 import argparse
 import pathlib
 
-from qm9_new import HUDataModule
 from runtime.utils import str2bool
 
 PARSER = argparse.ArgumentParser(description="HU_AF2")
@@ -160,7 +159,7 @@ PARSER.add_argument(
 )
 
 PARSER.add_argument(
-    "--epoch_test", type=str, default="last.pt", help="epoch to test in inference"
+    "--weight", type=str, default="last.pt", help="weight to use in inference"
 )
 
 PARSER.add_argument(
@@ -181,6 +180,7 @@ PARSER.add_argument(
     default=["H_3"],
     help="ulr_types for test_mode",
 )
+PARSER.add_argument("--test_pdb", type=str, help="chothia-numbered antibody PDB to inference")
 PARSER.add_argument("--file_name", type=str, default=None, help='name for result file')
 PARSER.add_argument(
     "--using_post_kabsch",
@@ -189,4 +189,3 @@ PARSER.add_argument(
     const=True,
     default=False,
     help="using target post kabsch",)
-HUDataModule.add_argparse_args(PARSER)

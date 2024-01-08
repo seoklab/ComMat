@@ -11,7 +11,7 @@ import torch
 import torch.distributed as dist
 from torch import Tensor
 import datetime
-from openfold.utils.rigid_utils import Rigid
+from h3xsemble.utils.rigid_utils import Rigid
 def aggregate_residual(feats1, feats2, method: str):
     """ Add or concatenate two fiber features together. If degrees don't match, will use the ones of feats2. """
     if method in ['add', 'sum']:

@@ -2,8 +2,8 @@ import torch, os, json
 import pandas as pd
 import numpy as np
 import pickle
-from openfold.utils.rigid_utils import Rigid, Rotation
-from openfold.np.protein import Protein, to_pdb
+from h3xsemble.utils.rigid_utils import Rigid, Rotation
+from h3xsemble.utils.protein import Protein, to_pdb
 
 
 def split_output_loss_dic(loss_dic, batch_size):
@@ -23,7 +23,7 @@ def from_mask_to_resno(ulr_mask, hu_residue_index, header):
     return sen
 
 
-def get_post_prediction_pdb(input_dic, pred, tag_s, rmsd_s, header):
+def get_post_prediction_pdb(input_dic, pred, tag_s, header):
     out_string = ""
     seed_size = input_dic["aatype"].shape[1]
     batch_size = input_dic["aatype"].shape[0]
@@ -36,7 +36,7 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, rmsd_s, header):
         out_string = ""
         for seed_idx in range(seed_size):
             out_string += "MODEL %i\n" % (seed_idx + 1)
-            out_string += "REMARK RMSD %8.3f\n" % (rmsd_s[batch_idx, seed_idx])
+            #out_string += "REMARK RMSD %8.3f\n" % (rmsd_s[batch_idx, seed_idx])
             out_string += from_mask_to_resno(
                 h3_ulr_mask[batch_idx, seed_idx],
                 hu_residue_index[batch_idx, seed_idx],

@@ -4,21 +4,21 @@ import torch.nn as nn
 import math
 from typing import Optional, Tuple
 from copy import deepcopy
-from openfold.model.primitives import Linear, ipa_point_weights_init_
-from openfold.np.residue_constants import (
+from h3xsemble.model.primitives import Linear, ipa_point_weights_init_
+from h3xsemble.utils.residue_constants import (
     restype_rigid_group_default_frame,
     restype_atom14_to_rigid_group,
     restype_atom14_mask,
     restype_atom14_rigid_group_positions,
 )
-import openfold.utils.feats
-from openfold.utils.feats import (
+import h3xsemble.utils.feats
+from h3xsemble.utils.feats import (
     frames_and_literature_positions_to_atom14_pos,
     torsion_angles_to_frames,
 )
-import openfold.utils.feats
-from openfold.utils.rigid_utils import Rotation, Rigid
-from openfold.utils.tensor_utils import (
+import h3xsemble.utils.feats
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.tensor_utils import (
     dict_multimap,
     permute_final_dims,
     flatten_final_dims,

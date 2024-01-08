@@ -22,20 +22,20 @@ import torch
 import torch.nn as nn
 from typing import Optional, Tuple, Sequence
 
-from openfold.model.primitives import Linear, LayerNorm, ipa_point_weights_init_
-from openfold.np.residue_constants import (
+from h3xsemble.model.primitives import Linear, LayerNorm, ipa_point_weights_init_
+from h3xsemble.utils.residue_constants import (
     restype_rigid_group_default_frame,
     restype_atom14_to_rigid_group,
     restype_atom14_mask,
     restype_atom14_rigid_group_positions,
 )
-from openfold.utils.feats import (
+from h3xsemble.utils.feats import (
     frames_and_literature_positions_to_atom14_pos,
     torsion_angles_to_frames,
 )
-from openfold.utils.precision_utils import is_fp16_enabled
-from openfold.utils.rigid_utils import Rotation, Rigid
-from openfold.utils.tensor_utils import (
+from h3xsemble.utils.precision_utils import is_fp16_enabled
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.tensor_utils import (
     dict_multimap,
     permute_final_dims,
     flatten_final_dims,

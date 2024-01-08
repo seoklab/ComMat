@@ -3,7 +3,7 @@ import copy
 import torch
 import torch.nn as nn
 
-from openfold.utils.tensor_utils import tensor_tree_map
+from h3xsemble.utils.tensor_utils import tensor_tree_map
 
 
 class ExponentialMovingAverage:

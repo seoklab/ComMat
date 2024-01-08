@@ -3,18 +3,18 @@ import torch.nn as nn
 import math
 from typing import Optional, Tuple
 from copy import deepcopy
-from openfold.model.primitives import Linear, ipa_point_weights_init_
+from h3xsemble.model.primitives import Linear, ipa_point_weights_init_
 
 
-import openfold.utils.feats
-from openfold.utils.rigid_utils import Rotation, Rigid
-from openfold.utils.tensor_utils import (
+import h3xsemble.utils.feats
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.tensor_utils import (
     dict_multimap,
     permute_final_dims,
     flatten_final_dims,
 )
 
-from openfold.utils.feats import atom14_to_atom37
+from h3xsemble.utils.feats import atom14_to_atom37
 from h3xsemble.model.triangle_attn_relpos import Sequential
 from h3xsemble.model.embedder import InputSeqFeatEmbedder, RecycleEmbedder
 from h3xsemble.model.triangle_attn_relpos import WorkingZ
@@ -236,8 +236,8 @@ class H3xsembleModule(nn.Module):
         aatype = input_dic["aatype"]  # [S, L]
         z = None
         r = input_dic["inp_gt"]  # (S, L(R, T))
-        # [L] : openfold.utils.rigid_utils.Rigid
-        # (_rot (openfold.utils.Rigid, _rot_mats[3, 3]), _trans [3])
+        # [L] : h3xsemble.utils.rigid_utils.Rigid
+        # (_rot (h3xsemble.utils.Rigid, _rot_mats[3, 3]), _trans [3])
         ulr_mask = input_dic["ulr_mask"]  # where to predict [S, L]
         str_mask = input_dic["miss_mask"]  # [S, L]
         train_mode = input_dic["train_mode"]  #

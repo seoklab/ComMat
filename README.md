@@ -23,6 +23,11 @@ Or for "editable" install,
 pip3 install -e .
 ```
 
+```bash
+python3 setup.py install
+```
+
+
 This related
 [SO question](https://stackoverflow.com/questions/35064426/when-would-the-e-editable-option-be-useful-with-pip-install)
 describes the differences between the two commands.

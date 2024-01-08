@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from openfold.utils.rigid_utils import Rotation, Rigid, rot_matmul
+from h3xsemble.utils.rigid_utils import Rotation, Rigid, rot_matmul
 import numpy as np
-from openfold.np.residue_constants import rigid_group_atom_positions
-from openfold.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.residue_constants import rigid_group_atom_positions
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
 
 def clone_rigid(input_r, do_detach=True):
     if do_detach:

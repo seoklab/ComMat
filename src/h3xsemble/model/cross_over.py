@@ -1,9 +1,9 @@
 import torch, math
 import torch.nn as nn
 from typing import Optional, Tuple
-from openfold.model.primitives import Linear, ipa_point_weights_init_, LayerNorm
-from openfold.utils.rigid_utils import Rotation, Rigid
-from openfold.utils.tensor_utils import (
+from h3xsemble.model.primitives import Linear, ipa_point_weights_init_, LayerNorm
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.tensor_utils import (
     dict_multimap,
     permute_final_dims,
     flatten_final_dims,

@@ -1,4 +1,4 @@
-from openfold.utils.rigid_utils import Rigid, Rotation
+from h3xsemble.utils.rigid_utils import Rigid, Rotation
 import torch, pickle,random
 #with open('manual_cut_region_for_safe_kabsch
 modi_dic={}

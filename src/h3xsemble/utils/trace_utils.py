@@ -17,7 +17,7 @@ from functools import partialmethod
 import numpy as np
 import torch
 
-from openfold.utils.tensor_utils import tensor_tree_map
+from h3xsemble.utils.tensor_utils import tensor_tree_map
 
 
 def pad_feature_dict_seq(feature_dict, seqlen):

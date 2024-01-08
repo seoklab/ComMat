@@ -4,7 +4,7 @@ import random
 import numpy as np
 from pytorch_lightning.utilities.seed import seed_everything
 
-from openfold.utils.suppress_output import SuppressLogging
+from h3xsemble.utils.suppress_output import SuppressLogging
 
 
 def seed_globally(seed=None):

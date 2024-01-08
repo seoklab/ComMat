@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-from openfold.utils.rigid_utils import Rigid
-from openfold.np.residue_constants import restype_atom14_to_rigid_group, chi_angles_mask
-from openfold.model.primitives import Linear
+from h3xsemble.utils.rigid_utils import Rigid
+from h3xsemble.utils.residue_constants import restype_atom14_to_rigid_group, chi_angles_mask
+from h3xsemble.model.primitives import Linear
 
 from h3xsemble.model.structure_module import (
     InvariantPointAttention,
@@ -15,10 +15,10 @@ from h3xsemble.model.structure_module import (
     ScToBb,
 )
 
-from openfold.utils.tensor_utils import dict_multimap
+from h3xsemble.utils.tensor_utils import dict_multimap
 from h3xsemble.model.triangle_attn_relpos import Sequential,Hu_tmp_z
 from h3xsemble.model.utils import prep_rel_pos, get_bb_pos
-from openfold.utils.tensor_utils import (
+from h3xsemble.utils.tensor_utils import (
     dict_multimap,
     permute_final_dims,
     flatten_final_dims,

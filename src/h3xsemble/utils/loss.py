@@ -22,10 +22,10 @@ import torch.nn as nn
 from torch.distributions.bernoulli import Bernoulli
 from typing import Dict, Optional, Tuple
 
-from openfold.np import residue_constants
-from openfold.utils import feats
-from openfold.utils.rigid_utils import Rotation, Rigid
-from openfold.utils.tensor_utils import (
+from h3xsemble.utils import residue_constants
+from h3xsemble.utils import feats
+from h3xsemble.utils.rigid_utils import Rotation, Rigid
+from h3xsemble.utils.tensor_utils import (
     tree_map,
     tensor_tree_map,
     masked_mean,
