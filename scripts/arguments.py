@@ -180,12 +180,17 @@ PARSER.add_argument(
     default=["H_3"],
     help="ulr_types for test_mode",
 )
-PARSER.add_argument("--test_pdb", type=str, help="chothia-numbered antibody PDB to inference")
-PARSER.add_argument("--file_name", type=str, default=None, help='name for result file')
+PARSER.add_argument(
+    "--test_pdb", type=str, help="chothia-numbered antibody PDB to inference"
+)
+PARSER.add_argument(
+    "--output_path", type=str, default=None, help="path for output files"
+)
 PARSER.add_argument(
     "--using_post_kabsch",
     type=str2bool,
     nargs="?",
     const=True,
     default=False,
-    help="using target post kabsch",)
+    help="using target post kabsch",
+)
