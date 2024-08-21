@@ -183,6 +183,8 @@ PARSER.add_argument(
 PARSER.add_argument(
     "--test_pdb", type=str, help="chothia-numbered antibody PDB to inference"
 )
+
+PARSER.add_argument("--fasta_path", type=str, help="fasta_path for IgFold modeling")
 PARSER.add_argument(
     "--output_path", type=str, default=None, help="path for output files"
 )
