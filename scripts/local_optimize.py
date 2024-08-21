@@ -23,7 +23,7 @@ local_optimize_sidechain no """
 
 
 def run_input_multiple(pdbname, output_folder):
-    input_line = """data_directory        /src/galaxylocalopt/data
+    input_line = """data_directory        /home/yubeen/ComMat/src/galaxylocalopt/data
 top_type              polarh
 weight_type           Prot2016
 print_level           30
@@ -39,9 +39,9 @@ local_optimize_sidechain no """
     input_line = input_line.replace(
         "@P", f"{output_folder}/{pdbname}_multiple_aligned.pdb"
     )
-    input_line = input_line.replace("@O", f"{output_folder}/{pdbname}_relaxed.pdb")
+    input_line = input_line.replace("@O", f"{output_folder}/{pdbname}_relaxed")
     with open(f"{output_folder}/local_optimize.in", "w") as f_out:
         f_out.write(input_line)
     os.system(
-        f"mpiexec /src/galaxylocalopt/bin/local_optimize_mpi {output_folder}/local_optimize.in"
+        f"mpiexec src/galaxylocalopt/bin/local_optimize.mpi {output_folder}/local_optimize.in"
     )
