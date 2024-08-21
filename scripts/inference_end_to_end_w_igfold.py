@@ -5,12 +5,14 @@ import torch.nn as nn
 import torch.multiprocessing
 from collections import defaultdict
 from pathlib import Path
+from typing import DefaultDict
 
 ##
 # from apex.optimizers import FusedAdam, FusedLAMB
 ####
 from config import config as hu_config  # merge with af2 line
-from af2_loss import AlphaFoldLoss
+
+# from af2_loss import AlphaFoldLoss
 from preprocess import data_preprocess_temp
 from arguments import PARSER
 from runtime.loggers import LoggerCollection, DLLogger
@@ -23,7 +25,11 @@ from runtime.utils import (
 
 from igfold import IgFoldRunner
 from h3xsemble.model.H3xsembleModel import H3xsembleModule
-from utils import do_post_kabsch2, get_post_prediction_pdb
+from utils import (
+    do_post_kabsch2,
+    get_post_prediction_pdb,
+    get_post_prediction_pdb_ranked,
+)
 from align_to_modeled import write_aligned_pdb
 from local_optimize import run_input_multiple
 
@@ -48,7 +54,6 @@ def load_state(
 
 def inference(
     model: nn.Module,
-    loss_fn: nn.Module,
     benchloader_dic,
     sampled_n_recycle: int,
     reset_structure: bool,
@@ -86,11 +91,11 @@ def inference(
             if args.write_pdb:
                 if not Path(f"{args.output_path}").exists():
                     Path(args.output_path).mkdir(exist_ok=True)
-                get_post_prediction_pdb(
+                get_post_prediction_pdb_ranked(
                     input_dic,
                     pred,
-                    tag,
-                    header=f"{args.output_path}/{tag}.pdb",
+                    tag_s=None,
+                    header=f"{args.output_path}/{tag}",
                 )
 
 
@@ -120,34 +125,41 @@ if __name__ == "__main__":
     )
 
     hu_config.model.seed_size = args.test_seed_size
-    hu_config.loss.seed_size = args.test_seed_size
+    # hu_config.loss.seed_size = args.test_seed_size
     if "build_all_cdr" in hu_config.dataloader:
         build_all_cdr = hu_config.dataloader.build_all_cdr
     else:
         build_all_cdr = False
 
-    ### Get IgFold structure ###
+    ### if no test_pdb structure is given, IgFold will be used to generate structure ###
 
-    fasta_file = Path(args.fasta_path)
-    output_folder = args.output_path
-    sequences: defaultdict[str, str] = defaultdict(str)
-    with open(fasta_file) as f_out:
-        lines = f_out.readlines()
-        for line in lines:
-            if line.startswith(">"):
-                chain = line[1:].strip()
-            sequences[chain] += line.strip()
+    if args.test_pdb is not None:
+        test_pdb = args.test_pdb
+    else:  # Get IgFold structure
+        fasta_file = Path(args.fasta_path)
+        output_folder = args.output_path
+        sequences: DefaultDict[str, str] = defaultdict(str)
+        with open(fasta_file) as f_out:
+            lines = f_out.readlines()
+            for line in lines:
+                if line.startswith(">"):
+                    chain = line[1:].strip()
+                else:
+                    sequences[chain] += line.strip()
 
-    igfold = IgFoldRunner()
-    igfold.fold(
-        f"{output_folder}/igfold.pdb",
-        sequences=sequences,
-        do_refine=False,
-        do_renum=False,
-    )
+        if not Path(output_folder).exists():
+            Path(output_folder).mkdir(exist_ok=True)
+        igfold = IgFoldRunner()
+        igfold.fold(
+            f"{output_folder}/igfold.pdb",
+            sequences=sequences,
+            do_refine=False,
+            do_renum=False,
+        )
+        test_pdb = f"{output_folder}/igfold.pdb"
 
     #### TODO: Make data processing part ###
-    pdbname = Path(args.test_pdb).stem
+    pdbname = Path(args.fasta_path).stem
     input_dic, tag, mode = data_preprocess_temp(
         pdbname,
         ag_remove=True,
@@ -158,14 +170,13 @@ if __name__ == "__main__":
     )
 
     model = H3xsembleModule(hu_config.model)
-    loss_fn = AlphaFoldLoss(hu_config.loss)
+    #    loss_fn = AlphaFoldLoss(hu_config.loss)
     print_parameters_count(model)
     logger.log_hyperparams(vars(args))
     increase_l2_fetch_granularity()
 
     inference(
         model,
-        loss_fn,
         [input_dic, tag, mode],
         args.test_n_recycle,
         hu_config.model.reset_structure,
@@ -184,6 +195,7 @@ if __name__ == "__main__":
 
     ### relax with GalaxyLocalOptimize ###
     run_input_multiple(pdbname, output_folder)
+
     ### ranking with AF2Rank ###
 
     logging.info("Inference finished successfully")
