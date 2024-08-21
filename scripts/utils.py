@@ -30,7 +30,10 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, header):
     all_cdr_mask = input_dic["all_cdr_mask"].bool()
     hu_residue_index = input_dic["hu_residue_index"].long()
     for batch_idx in range(batch_size):
-        tag = tag_s[batch_idx]
+        if tag_s is not None:
+            tag = tag_s[batch_idx]
+        else:
+            tag = ""
         out_string = ""
         for seed_idx in range(seed_size):
             out_string += "MODEL %i\n" % (seed_idx + 1)
@@ -50,6 +53,10 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, header):
                 hu_residue_index[batch_idx, seed_idx],
                 header="sampled",
             )
+            b_factors = torch.zeros_like(
+                pred["final_atom_mask"][batch_idx, seed_idx].cpu()
+            )
+            b_factors[:, 1] = pred["plddt"][batch_idx, seed_idx]
             pdb_out = Protein(
                 aatype=input_dic["aatype"][batch_idx, seed_idx].cpu().numpy(),
                 atom_positions=pred["final_atom_positions"][batch_idx, seed_idx]
@@ -59,9 +66,10 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, header):
                 residue_index=input_dic["hu_residue_index"][batch_idx, seed_idx]
                 .cpu()
                 .numpy(),
-                b_factors=torch.zeros_like(
-                    pred["final_atom_mask"][batch_idx, seed_idx].cpu()
-                ).numpy(),
+                # b_factors=torch.zeros_like(
+                #     pred["final_atom_mask"][batch_idx, seed_idx].cpu()
+                # ).numpy(),
+                b_factors=b_factors.cpu().numpy(),
                 chain_index=input_dic["chain_id"][batch_idx, seed_idx].cpu().numpy(),
                 remark=None,
                 parents=None,
@@ -69,8 +77,82 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, header):
             )
             out_string += to_pdb(pdb_out)
             out_string += "ENDMDL\n"
-        with open(f"{header}.{tag}.pdb", "wt") as fp:
-            fp.writelines(out_string)
+        if tag_s is not None:
+            with open(f"{header}.{tag}.pdb", "wt") as fp:
+                fp.writelines(out_string)
+        else:
+            with open(f"{header}.pdb", "wt") as fp:
+                fp.writelines(out_string)
+    return None
+
+
+def get_post_prediction_pdb_ranked(input_dic, pred, tag_s, header):
+    out_string = ""
+    seed_size = input_dic["aatype"].shape[1]
+    batch_size = input_dic["aatype"].shape[0]
+    ulr_mask = input_dic["ulr_mask"].bool()
+    h3_ulr_mask = input_dic["raw_ulr_mask"].bool()
+    all_cdr_mask = input_dic["all_cdr_mask"].bool()
+    hu_residue_index = input_dic["hu_residue_index"].long()
+    plddt = pred["plddt"] * input_dic["raw_ulr_mask"]  # B,S,L
+    plddt_mean = plddt.sum(dim=-1) / input_dic["raw_ulr_mask"].sum(dim=-1)
+
+    ranking = torch.argsort(plddt_mean, descending=True)
+    for batch_idx in range(batch_size):
+        if tag_s is not None:
+            tag = tag_s[batch_idx]
+        else:
+            tag = ""
+        out_string = ""
+        for idx, seed_idx in enumerate(ranking[batch_idx]):
+            out_string += "MODEL %i\n" % (idx + 1)
+            # out_string += "REMARK RMSD %8.3f\n" % (rmsd_s[batch_idx, seed_idx])
+            out_string += from_mask_to_resno(
+                h3_ulr_mask[batch_idx, seed_idx],
+                hu_residue_index[batch_idx, seed_idx],
+                header="H3",
+            )
+            out_string += from_mask_to_resno(
+                all_cdr_mask[batch_idx, seed_idx],
+                hu_residue_index[batch_idx, seed_idx],
+                header="CDR",
+            )
+            out_string += from_mask_to_resno(
+                ulr_mask[batch_idx, seed_idx],
+                hu_residue_index[batch_idx, seed_idx],
+                header="sampled",
+            )
+            out_string += "REMARK PLDDT %8.3f\n" % plddt_mean[batch_idx, seed_idx]
+            b_factors = torch.zeros_like(
+                pred["final_atom_mask"][batch_idx, seed_idx].cpu()
+            )
+            b_factors[:, 1] = pred["plddt"][batch_idx, seed_idx]
+            pdb_out = Protein(
+                aatype=input_dic["aatype"][batch_idx, seed_idx].cpu().numpy(),
+                atom_positions=pred["final_atom_positions"][batch_idx, seed_idx]
+                .cpu()
+                .numpy(),
+                atom_mask=pred["final_atom_mask"][batch_idx, seed_idx].cpu().numpy(),
+                residue_index=input_dic["hu_residue_index"][batch_idx, seed_idx]
+                .cpu()
+                .numpy(),
+                # b_factors=torch.zeros_like(
+                #     pred["final_atom_mask"][batch_idx, seed_idx].cpu()
+                # ).numpy(),
+                b_factors=b_factors.cpu().numpy(),
+                chain_index=input_dic["chain_id"][batch_idx, seed_idx].cpu().numpy(),
+                remark=None,
+                parents=None,
+                parents_chain_index=None,
+            )
+            out_string += to_pdb(pdb_out)
+            out_string += "ENDMDL\n"
+        if tag_s is not None:
+            with open(f"{header}.{tag}.pdb", "wt") as fp:
+                fp.writelines(out_string)
+        else:
+            with open(f"{header}.pdb", "wt") as fp:
+                fp.writelines(out_string)
     return None
 
 
