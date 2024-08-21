@@ -1,8 +1,6 @@
-import torch, os, json
-import pandas as pd
-import numpy as np
+import torch
+import os
 import pickle
-from h3xsemble.utils.rigid_utils import Rigid, Rotation
 from h3xsemble.utils.protein import Protein, to_pdb
 
 
@@ -36,7 +34,7 @@ def get_post_prediction_pdb(input_dic, pred, tag_s, header):
         out_string = ""
         for seed_idx in range(seed_size):
             out_string += "MODEL %i\n" % (seed_idx + 1)
-            #out_string += "REMARK RMSD %8.3f\n" % (rmsd_s[batch_idx, seed_idx])
+            # out_string += "REMARK RMSD %8.3f\n" % (rmsd_s[batch_idx, seed_idx])
             out_string += from_mask_to_resno(
                 h3_ulr_mask[batch_idx, seed_idx],
                 hu_residue_index[batch_idx, seed_idx],
@@ -122,10 +120,11 @@ def do_pre_kabsch(input_dic, tag):
     #
     return input_dic
 
+
 def do_post_kabsch2(input_dic, pred, tag_s):
     kabsch_mask = input_dic["kabsch_mask"].bool()
     # using non_ulr region
-    exclude_ag_mask = input_dic["chain_tag"] != 2
+    # exclude_ag_mask = input_dic["chain_tag"] != 2
     non_cdr_only = ~input_dic["all_cdr_mask"]
     mask = non_cdr_only & kabsch_mask
     batch_size, seed_size, length = mask.shape
@@ -134,18 +133,24 @@ def do_post_kabsch2(input_dic, pred, tag_s):
     tmp_mask = tmp_mask[:, 0, :]  # B,L: share among seed dimension
     tmp_mask = tmp_mask.bool()
     memo = []
-    ca_from_rigids = input_dic["inp_gt"]._trans.clone()[..., None, :] * 10
-    tmp_ref_coords = input_dic["all_atom_positions"].clone()
+    # ca_from_rigids = input_dic["inp_gt"]._trans.clone()[..., None, :] * 10
+    # tmp_ref_coords = input_dic["all_atom_positions"].clone()
     for batch_idx in range(batch_size):  # lousy for loop... but safe kabsch alignment
         tag = tag_s[batch_idx]
-        aligned_coords=do_kabsch(
-                pred['final_atom_positions'][batch_idx:batch_idx+1,:,tmp_mask[batch_idx],1:2,:],
-                input_dic['all_atom_positions'][batch_idx:batch_idx+1,:,tmp_mask[batch_idx],1:2,:],
-                pred['final_atom_positions'][batch_idx:batch_idx+1].reshape(1,seed_size,-1,3),
-                mode='post',
-                tag=tag,
-                )
-        #aligned_coords = do_kabsch(
+        aligned_coords = do_kabsch(
+            pred["final_atom_positions"][
+                batch_idx : batch_idx + 1, :, tmp_mask[batch_idx], 1:2, :
+            ],
+            input_dic["all_atom_positions"][
+                batch_idx : batch_idx + 1, :, tmp_mask[batch_idx], 1:2, :
+            ],
+            pred["final_atom_positions"][batch_idx : batch_idx + 1].reshape(
+                1, seed_size, -1, 3
+            ),
+            mode="post",
+            tag=tag,
+        )
+        # aligned_coords = do_kabsch(
         #    input_dic["all_atom_positions"][
         #        batch_idx : batch_idx + 1, :, tmp_mask[batch_idx], 1:2, :
         #    ],
@@ -157,16 +162,17 @@ def do_post_kabsch2(input_dic, pred, tag_s):
         #    ),
         #    mode="post",
         #    tag=tag,
-        #)
+        # )
         aligned_coords = aligned_coords.reshape(1, seed_size, length, -1, 3)
         memo.append(aligned_coords)
     memo = torch.cat(memo, dim=0)
     return memo
 
+
 def do_post_kabsch(input_dic, pred, tag_s):
     kabsch_mask = input_dic["kabsch_mask"].bool()
     # using non_ulr region
-    exclude_ag_mask = input_dic["chain_tag"] != 2
+    # exclude_ag_mask = input_dic["chain_tag"] != 2
     non_cdr_only = ~input_dic["all_cdr_mask"]
     mask = non_cdr_only & kabsch_mask
     batch_size, seed_size, length = mask.shape
@@ -175,8 +181,8 @@ def do_post_kabsch(input_dic, pred, tag_s):
     tmp_mask = tmp_mask[:, 0, :]  # B,L: share among seed dimension
     tmp_mask = tmp_mask.bool()
     memo = []
-    ca_from_rigids = input_dic["inp_gt"]._trans.clone()[..., None, :] * 10
-    tmp_ref_coords = input_dic["all_atom_positions"].clone()
+    # ca_from_rigids = input_dic["inp_gt"]._trans.clone()[..., None, :] * 10
+    # tmp_ref_coords = input_dic["all_atom_positions"].clone()
     for batch_idx in range(batch_size):  # lousy for loop... but safe kabsch alignment
         tag = tag_s[batch_idx]
         # aligned_coords=do_kabsch(
@@ -290,25 +296,25 @@ def calc_torsion_from_4point(v1, v2, v3, v4):
     return angle
 
 
-def add_torsion_to_ndata(ndata):
-    crd = cast_global_coord(ndata)
-    # calc torsion N->CA->C->N_next
-    n = crd[:-1, 1]
-    ca = crd[:-1, 0]
-    c = crd[:-1, 2]
-    n_next = crd[1:, 1]
-    tor1 = calc_torsion_from_4point(n, ca, c, n_next)
-    # C_prev->N->CA->C
-    n = crd[1:, 1]
-    ca = crd[1:, 0]
-    c = crd[1:, 2]
-    c_prev = crd[:-1, 2]
-    tor2 = calc_torsion_from_4point(c_prev, n, ca, c)
+# def add_torsion_to_ndata(ndata):
+#     crd = cast_global_coord(ndata)
+#     # calc torsion N->CA->C->N_next
+#     n = crd[:-1, 1]
+#     ca = crd[:-1, 0]
+#     c = crd[:-1, 2]
+#     n_next = crd[1:, 1]
+#     tor1 = calc_torsion_from_4point(n, ca, c, n_next)
+#     # C_prev->N->CA->C
+#     n = crd[1:, 1]
+#     ca = crd[1:, 0]
+#     c = crd[1:, 2]
+#     c_prev = crd[:-1, 2]
+#     tor2 = calc_torsion_from_4point(c_prev, n, ca, c)
 
-    ndata["tor"] = torch.zeros_like(ndata["l1"][:, 0:2, 0])  # N,2
-    ndata["tor"][0:-1, 0] = tor1
-    ndata["tor"][1:, 1] = tor2
-    return ndata
+#     ndata["tor"] = torch.zeros_like(ndata["l1"][:, 0:2, 0])  # N,2
+#     ndata["tor"][0:-1, 0] = tor1
+#     ndata["tor"][1:, 1] = tor2
+#     return ndata
 
 
 def clone_dic(dic, skip=[], expansion_templat=None):
@@ -367,10 +373,10 @@ def update_epoch_loss(epoch_loss, single_loss):
     return epoch_loss
 
 
-def epoch_loss_be_tensor(epoch_loss):
-    for key in single_loss.keys():
-        epoch_loss[key] = torch.Tensor(epoch_loss[key])
-    return epoch_loss
+# def epoch_loss_be_tensor(epoch_loss):
+#     for key in single_loss.keys():
+#         epoch_loss[key] = torch.Tensor(epoch_loss[key])
+#     return epoch_loss
 
 
 def finalize_epoch_loss(epoch_loss, device="cuda"):
