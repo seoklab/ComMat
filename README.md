@@ -33,4 +33,4 @@ This related
 describes the differences between the two commands.
 
 ## License
-All code, except for the code in the "src/galaxylocalopt" directory, is licensed under the MIT license. Code in the "binary_src" directory is licensed under the CC BY-NC-ND 4.0 license.
+All code, except for the code in the "src/galaxylocalopt" directory, is licensed under the MIT license. Code in the "src/galaxylocalopt" directory is licensed under the CC BY-NC-ND 4.0 license.
