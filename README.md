@@ -32,4 +32,5 @@ This related
 [SO question](https://stackoverflow.com/questions/35064426/when-would-the-e-editable-option-be-useful-with-pip-install)
 describes the differences between the two commands.
 
-
+## License
+All code, except for the code in the "src/galaxylocalopt" directory, is licensed under the MIT license. Code in the "binary_src" directory is licensed under the CC BY-NC-ND 4.0 license.
