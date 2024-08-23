@@ -20,4 +20,4 @@ dependencies:
   - seaborn
   - pip
   - pip:
-    - igfold=0.4.0
+    - igfold==0.4.0
