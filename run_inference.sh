@@ -12,6 +12,6 @@
 export NCCL_P2P_DISABLE=1
 
 
-python scripts/inference.py --batch_size 1 --weight community_size_32.pt --test_seed_size 32 \
-    --test_pdb 7sn1_H_L_#.pdb --test_n_recycle 8 --test_n_crop 100 --test_ulr_type H_3 \
-    --file_name test_0108 --using_post_kabsch --write_pdb
+python scripts/inference_end_to_end_w_igfold.py --batch_size 1 --weight community_size_32.pt --test_seed_size 32 \
+    --fasta_path 7sn1_H_L_#.fasta --test_n_recycle 8 --test_n_crop 100 --test_ulr_type H_3 \
+    --output_path test_0821 --using_post_kabsch --write_pdb
