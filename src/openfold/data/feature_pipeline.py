@@ -20,7 +20,7 @@ import ml_collections
 import numpy as np
 import torch
 
-from openfold.data import input_pipeline, input_pipeline_multimer
+from openfold.data import input_pipeline
 
 
 FeatureDict = Mapping[str, np.ndarray]
@@ -40,11 +40,9 @@ def np_to_tensor_dict(
     Returns:
         A dictionary of features mapping feature names to features. Only the given
         features are returned, all other ones are filtered out.
-    """
-    # torch generates warnings if feature is already a torch Tensor
-    to_tensor = lambda t: torch.tensor(t) if type(t) != torch.Tensor else t.clone().detach()
+    """ 
     tensor_dict = {
-        k: to_tensor(v) for k, v in np_example.items() if k in features
+        k: torch.tensor(v) for k, v in np_example.items() if k in features
     }
 
     return tensor_dict
@@ -63,10 +61,6 @@ def make_data_config(
 
     feature_names = cfg.common.unsupervised_features
 
-    # Add seqemb related features if using seqemb mode.
-    if cfg.seqemb_mode.enabled:
-        feature_names += cfg.common.seqemb_features
-
     if cfg.common.use_templates:
         feature_names += cfg.common.template_features
 
@@ -78,53 +72,44 @@ def make_data_config(
 
 def np_example_to_features(
     np_example: FeatureDict,
-    config: ml_collections.ConfigDict,
+    #config: ml_collections.ConfigDict,
     mode: str,
-    is_multimer: bool = False
 ):
     np_example = dict(np_example)
+    num_res = int(np_example["seq_length"][0])
+    #cfg, feature_names = make_data_config(config, mode=mode, num_res=num_res)
 
-    seq_length = np_example["seq_length"]
-    num_res = int(seq_length[0]) if seq_length.ndim != 0 else int(seq_length)
-    cfg, feature_names = make_data_config(config, mode=mode, num_res=num_res)
- 
-    if "deletion_matrix_int" in np_example:
-        np_example["deletion_matrix"] = np_example.pop(
-            "deletion_matrix_int"
-        ).astype(np.float32)
+    #if "deletion_matrix_int" in np_example:
+    #    np_example["deletion_matrix"] = np_example.pop(
+    #        "deletion_matrix_int"
+    #    ).astype(np.float32)
+    feature_names=["aatype","residue_index","all_atom_mask","all_atom_positions"]
 
     tensor_dict = np_to_tensor_dict(
         np_example=np_example, features=feature_names
     )
-
+    tensor_dict["aatype"]=torch.argmax(tensor_dict["aatype"],dim=1)#MUST
     with torch.no_grad():
-        if is_multimer:
-            features = input_pipeline_multimer.process_tensors_from_config(
-                tensor_dict,
-                cfg.common,
-                cfg[mode],
-            )
-        else:
-            features = input_pipeline.process_tensors_from_config(
-                tensor_dict,
-                cfg.common,
-                cfg[mode],
-            )
+        features = input_pipeline.process_tensors_from_config(
+            tensor_dict,
+            #cfg.common,
+            #cfg[mode],
+        )
 
-    if mode == "train":
-        p = torch.rand(1).item()
-        use_clamped_fape_value = float(p < cfg.supervised.clamp_prob)
-        features["use_clamped_fape"] = torch.full(
-            size=[cfg.common.max_recycling_iters + 1],
-            fill_value=use_clamped_fape_value,
-            dtype=torch.float32,
-        )
-    else:
-        features["use_clamped_fape"] = torch.full(
-            size=[cfg.common.max_recycling_iters + 1],
-            fill_value=0.0,
-            dtype=torch.float32,
-        )
+    #if mode == "train":
+    #    p = torch.rand(1).item()
+    #    use_clamped_fape_value = float(p < cfg.supervised.clamp_prob)
+    #    features["use_clamped_fape"] = torch.full(
+    #        size=[cfg.common.max_recycling_iters + 1],
+    #        fill_value=use_clamped_fape_value,
+    #        dtype=torch.float32,
+    #    )
+    #else:
+    #    features["use_clamped_fape"] = torch.full(
+    #        size=[cfg.common.max_recycling_iters + 1],
+    #        fill_value=0.0,
+    #        dtype=torch.float32,
+    #    )
 
     return {k: v for k, v in features.items()}
 
@@ -132,22 +117,17 @@ def np_example_to_features(
 class FeaturePipeline:
     def __init__(
         self,
-        config: ml_collections.ConfigDict,
+        #config: ml_collections.ConfigDict,
     ):
-        self.config = config
-
+        #self.config = config
+        pass
     def process_features(
         self,
         raw_features: FeatureDict,
-        mode: str = "train",
-        is_multimer: bool = False,
+        mode: str = "train", 
     ) -> FeatureDict:
-        # if(is_multimer and mode != "predict"):
-        #     raise ValueError("Multimer mode is not currently trainable")
-        
         return np_example_to_features(
             np_example=raw_features,
-            config=self.config,
+            #config=self.config,
             mode=mode,
-            is_multimer=is_multimer,
         )

@@ -23,7 +23,6 @@ import subprocess
 from typing import Any, Callable, Mapping, Optional, Sequence
 from urllib import request
 
-from openfold.data import parsers
 from openfold.data.tools import utils
 
 
@@ -94,13 +93,10 @@ class Jackhmmer:
         self.streaming_callback = streaming_callback
 
     def _query_chunk(
-        self, 
-        input_fasta_path: str, 
-        database_path: str,
-        max_sequences: Optional[int] = None
+        self, input_fasta_path: str, database_path: str
     ) -> Mapping[str, Any]:
         """Queries the database chunk using Jackhmmer."""
-        with utils.tmpdir_manager() as query_tmp_dir:
+        with utils.tmpdir_manager(base_dir="/tmp") as query_tmp_dir:
             sto_path = os.path.join(query_tmp_dir, "output.sto")
 
             # The F1/F2/F3 are the expected proportion to pass each of the filtering
@@ -171,11 +167,8 @@ class Jackhmmer:
                 with open(tblout_path) as f:
                     tbl = f.read()
 
-            if(max_sequences is None):
-                with open(sto_path) as f:
-                    sto = f.read()
-            else:
-                sto = parsers.truncate_stockholm_msa(sto_path, max_sequences)
+            with open(sto_path) as f:
+                sto = f.read()
 
         raw_output = dict(
             sto=sto,
@@ -186,26 +179,11 @@ class Jackhmmer:
         )
 
         return raw_output
-    
-    def query(self, 
-        input_fasta_path: str,
-        max_sequences: Optional[int] = None
-    ) -> Sequence[Sequence[Mapping[str, Any]]]:
-        return self.query_multiple([input_fasta_path], max_sequences)
 
-    def query_multiple(self, 
-        input_fasta_paths: Sequence[str],
-        max_sequences: Optional[int] = None
-    ) -> Sequence[Sequence[Mapping[str, Any]]]:
+    def query(self, input_fasta_path: str) -> Sequence[Mapping[str, Any]]:
         """Queries the database using Jackhmmer."""
         if self.num_streamed_chunks is None:
-            single_chunk_results = []
-            for input_fasta_path in input_fasta_paths:
-                single_chunk_result = self._query_chunk(
-                    input_fasta_path, self.database_path, max_sequences,
-                )
-                single_chunk_results.append(single_chunk_result)
-            return single_chunk_results 
+            return [self._query_chunk(input_fasta_path, self.database_path)]
 
         db_basename = os.path.basename(self.database_path)
         db_remote_chunk = lambda db_idx: f"{self.database_path}.{db_idx}"
@@ -220,7 +198,7 @@ class Jackhmmer:
 
         # Download the (i+1)-th chunk while Jackhmmer is running on the i-th chunk
         with futures.ThreadPoolExecutor(max_workers=2) as executor:
-            chunked_outputs = [[] for _ in range(len(input_fasta_paths))]
+            chunked_output = []
             for i in range(1, self.num_streamed_chunks + 1):
                 # Copy the chunk locally
                 if i == 1:
@@ -238,21 +216,13 @@ class Jackhmmer:
 
                 # Run Jackhmmer with the chunk
                 future.result()
-                for fasta_idx, input_fasta_path in enumerate(input_fasta_paths):
-                    chunked_outputs[fasta_idx].append(
-                        self._query_chunk(
-                            input_fasta_path, 
-                            db_local_chunk(i), 
-                            max_sequences
-                        )
-                    )
+                chunked_output.append(
+                    self._query_chunk(input_fasta_path, db_local_chunk(i))
+                )
 
                 # Remove the local copy of the chunk
                 os.remove(db_local_chunk(i))
-                # Do not set next_future for the last chunk so that this works
-                # even for databases with only 1 chunk
-                if(i < self.num_streamed_chunks):
-                    future = next_future
+                future = next_future
                 if self.streaming_callback:
                     self.streaming_callback(i)
-        return chunked_outputs
+        return chunked_output

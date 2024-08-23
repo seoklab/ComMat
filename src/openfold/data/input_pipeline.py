@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import random
+from functools import partial
 
 import torch
 
@@ -71,9 +71,6 @@ def ensembled_transform_fns(common_cfg, mode_cfg, ensemble_seed):
     """Input pipeline data transformers that can be ensembled and averaged."""
     transforms = []
 
-    if mode_cfg.block_delete_msa:
-        transforms.append(data_transforms.block_delete_msa(common_cfg.block_delete_msa))
-
     if "max_distillation_msa_clusters" in mode_cfg:
         transforms.append(
             data_transforms.sample_msa_distillation(
@@ -107,8 +104,7 @@ def ensembled_transform_fns(common_cfg, mode_cfg, ensemble_seed):
         # the masked locations and secret corrupted locations.
         transforms.append(
             data_transforms.make_masked_msa(
-                common_cfg.masked_msa, mode_cfg.masked_msa_replace_fraction,
-                seed=(msa_seed + 1) if msa_seed else None,
+                common_cfg.masked_msa, mode_cfg.masked_msa_replace_fraction
             )
         )
 
@@ -154,44 +150,106 @@ def ensembled_transform_fns(common_cfg, mode_cfg, ensemble_seed):
     return transforms
 
 
-def process_tensors_from_config(tensors, common_cfg, mode_cfg):
+def hu_transform():
+#def hu_transform(tensors):
+    transforms=[]
+    transforms.extend(
+        [
+            data_transforms.make_atom14_masks,
+            #data_transforms.make_seq_mask,
+        ]
+    )
+    transforms.extend(
+        [
+            data_transforms.make_atom14_positions,
+            data_transforms.atom37_to_frames,
+            data_transforms.atom37_to_torsion_angles(""),
+            data_transforms.make_pseudo_beta(""),
+            data_transforms.get_backbone_frames,
+            data_transforms.get_chi_angles,
+        ]
+    )
+    #tensors = compose(transforms)(tensors)
+    #return tensors
+    return transforms
+def process_tensors_from_config(tensors):
+#def process_tensors_from_config(tensors, common_cfg, mode_cfg):
     """Based on the config, apply filters and transformations to the data."""
 
-    ensemble_seed = random.randint(0, torch.iinfo(torch.int32).max)
+    #ensemble_seed = torch.Generator().seed()
 
-    def wrap_ensemble_fn(data, i):
-        """Function to be mapped over the ensemble dimension."""
-        d = data.copy()
-        fns = ensembled_transform_fns(
-            common_cfg, 
-            mode_cfg, 
-            ensemble_seed,
-        )
-        fn = compose(fns)
-        d["ensemble_index"] = i
-        return fn(d)
+    #def wrap_ensemble_fn(data, i):
+    #    """Function to be mapped over the ensemble dimension."""
+    #    d = data.copy()
+    #    fns = ensembled_transform_fns(
+    #        common_cfg, 
+    #        mode_cfg, 
+    #        ensemble_seed,
+    #    )
+    #    fn = compose(fns)
+    #    d["ensemble_index"] = i
+    #    return fn(d)
 
-    no_templates = True
-    if("template_aatype" in tensors):
-        no_templates = tensors["template_aatype"].shape[0] == 0
+    #no_templates = True
+    #if("template_aatype" in tensors):
+    #    no_templates = tensors["template_aatype"].shape[0] == 0
 
-    nonensembled = nonensembled_transform_fns(
-        common_cfg,
-        mode_cfg,
-    )
+    #nonensembled = nonensembled_transform_fns(
+    #    common_cfg,
+    #    mode_cfg,
+    #)
+    nonensembled=hu_transform()
 
     tensors = compose(nonensembled)(tensors)
 
-    if("no_recycling_iters" in tensors):
-        num_recycling = int(tensors["no_recycling_iters"])
-    else:
-        num_recycling = common_cfg.max_recycling_iters
+    #if("no_recycling_iters" in tensors):
+    #    num_recycling = int(tensors["no_recycling_iters"])
+    #else:
+    #    num_recycling = common_cfg.max_recycling_iters
 
-    tensors = map_fn(
-        lambda x: wrap_ensemble_fn(tensors, x), torch.arange(num_recycling + 1)
-    )
+    #tensors = map_fn(
+    #    lambda x: wrap_ensemble_fn(tensors, x), torch.arange(num_recycling + 1)
+    #)
 
     return tensors
+#def process_tensors_from_config(tensors, common_cfg=None, mode_cfg=None):
+#    """Based on the config, apply filters and transformations to the data."""
+#
+#    ensemble_seed = torch.Generator().seed()
+#
+#    def wrap_ensemble_fn(data, i):
+#        """Function to be mapped over the ensemble dimension."""
+#        d = data.copy()
+#        fns = ensembled_transform_fns(
+#            common_cfg, 
+#            mode_cfg, 
+#            ensemble_seed,
+#        )
+#        fn = compose(fns)
+#        d["ensemble_index"] = i
+#        return fn(d)
+#
+#    no_templates = True
+#    if("template_aatype" in tensors):
+#        no_templates = tensors["template_aatype"].shape[0] == 0
+#
+#    nonensembled = nonensembled_transform_fns(
+#        common_cfg,
+#        mode_cfg,
+#    )
+#
+#    tensors = compose(nonensembled)(tensors)
+#
+#    if("no_recycling_iters" in tensors):
+#        num_recycling = int(tensors["no_recycling_iters"])
+#    else:
+#        num_recycling = common_cfg.max_recycling_iters
+#
+#    tensors = map_fn(
+#        lambda x: wrap_ensemble_fn(tensors, x), torch.arange(num_recycling + 1)
+#    )
+#
+#    return tensors
 
 
 @data_transforms.curry1
