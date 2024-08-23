@@ -4,13 +4,12 @@ import pickle
 import random
 
 
-
 def _read_pickle_select(
     fn,
     structure_mode,  # igfold, immunebuilder, etc...
     model_index,
     select_feature_s=["rigidgroups_gt_frames"],
-    use_crystal=True
+    use_crystal=True,
     # check_consistency=False,
     # select_feature_s=["rigidgroups_gt_frames", "torsion_angle_sin_cos"],
     # trial: train w/o torsion angle as input feature. It might be useful for adding gaussian noise to input structure.
@@ -20,8 +19,8 @@ def _read_pickle_select(
         dat = pickle.load(fp)
     # set crystal structure mode manually
     # structure_mode='crystal'
-    if structure_mode =="IgFold":
-        model_index=0
+    if structure_mode == "IgFold":
+        model_index = 0
     if structure_mode == "crystal":
         black = []
         for key in dat.keys():
@@ -159,7 +158,7 @@ def generate_chimeric_feature(
     # Directly change the crystal feature dictionary. Is it okay?
     tmp_dic = {}
     for key in dic.keys():
-        if not key in selected_feature_s:
+        if key not in selected_feature_s:
             continue
         model_feature_key = f"{structure_mode}_{key}"
         new_out_key = f"input_{key}"
@@ -169,6 +168,7 @@ def generate_chimeric_feature(
             model_feature = dic[model_feature_key][model_index]
         else:
             model_feature = dic[model_feature_key]
+        print(key, model_feature.shape, crystal_feature.shape)
         tmp_dic[new_out_key] = generate_chimeric_feature_single(
             crystal_feature, model_feature, mapper, key, crystal_chain_id_tensor
         )
@@ -246,6 +246,7 @@ def generate_chimeric_feature_single(
             ):
                 print("WARNING : mapping length is different. {mapper},{chain_id}")
                 sys.exit()
+            print(model_feature.shape)
             new_feature[crystal_from_index:crystal_to_index] = model_feature[
                 model_from_index:model_to_index
             ]

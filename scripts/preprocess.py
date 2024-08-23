@@ -5,8 +5,10 @@ import torch
 import numpy as np
 from h3xsemble.utils.rigid_utils import Rigid, Rotation
 
+
 def data_preprocess(pdbfile):
     return
+
 
 def zeropadding_for_collate(fn_dat, n_crop):
     curr_len = fn_dat.shape[0]
@@ -16,6 +18,7 @@ def zeropadding_for_collate(fn_dat, n_crop):
     out[:curr_len] = fn_dat
     return out
 
+
 def chain_tagging(
     tag,  # 6fe4_F_#_A
     dat,  # dict with various keys (chain_id, ...)
@@ -23,7 +26,7 @@ def chain_tagging(
     ag_remove_prob=0.25,
     ulr_type=["H_3"],
     inference_n_residue_extension=0,
-    build_all_cdr = False,
+    build_all_cdr=False,
 ):
     n_residue_extension = inference_n_residue_extension
     chain_idx = dat["chain_id"]
@@ -76,7 +79,7 @@ def chain_tagging(
                 active_cdr_H.append(cdr_type)
             else:
                 active_cdr_L.append(cdr_type)
-    active_set = ['H_3'] + active_cdr_H + active_cdr_L
+    active_set = ["H_3"] + active_cdr_H + active_cdr_L
     ulr_type = list(set(ulr_type) & set(active_set))
     all_cdr_mask = torch.stack(all_cdr_mask, dim=-2)  # *,6 or3,L
     all_cdr_mask = all_cdr_mask.sum(dim=-2)
@@ -104,9 +107,9 @@ def chain_tagging(
         ag_stat = False
 
     assert active_H3
-    if build_all_cdr: 
-        print('build_all_cdr!!!!!!!')
-        ulr_type = ['H_3'] + active_cdr_H + active_cdr_L
+    if build_all_cdr:
+        print("build_all_cdr!!!!!!!")
+        ulr_type = ["H_3"] + active_cdr_H + active_cdr_L
         print(ulr_type)
     else:
         ulr_type = ulr_type
@@ -156,6 +159,8 @@ def preprocess_input(
             dat[key] = zeropadding_for_collate(dat[key], n_crop)
             dat[key] = dat[key].expand(seed_size, *dat[key].shape).clone()
     return dat
+
+
 def crop_with_center(dic, mode, n_crop=100):
     miss_mask = dic["miss_mask"]
     ulr_mask = dic["ulr_mask"]
@@ -215,6 +220,7 @@ def crop_with_center(dic, mode, n_crop=100):
     ###
     return out_dic
 
+
 def gen_kabsch_mask(dat, mode):
     kabsch_mask = (
         dat["miss_mask"] * dat["all_atom_mask"][..., 1]
@@ -223,7 +229,7 @@ def gen_kabsch_mask(dat, mode):
         return kabsch_mask
     ##
     memo = []
-    for x in [-1, 0, 1,2]:
+    for x in [-1, 0, 1, 2]:
         mask1 = dat["chain_tag"] == x
         if mask1.sum().item() == 0:
             continue
@@ -235,48 +241,58 @@ def gen_kabsch_mask(dat, mode):
     kabsch_mask = kabsch_mask & memo
     return kabsch_mask.bool()
 
+
 def collate_batch(input_dic):
     output_dic = {}
     for k, v in input_dic.items():
         output_dic[k] = v.unsqueeze(0)
     return output_dic
 
-def data_preprocess_temp(pdbname, ag_remove, seed_size, trans_scale_factor, n_crop, build_from_scratch):
-    fn = f'{pdbname}_merged.dat'
+
+def data_preprocess_temp(
+    pdbname,
+    output_folder,
+    ag_remove,
+    seed_size,
+    trans_scale_factor,
+    n_crop,
+    build_from_scratch,
+):
+    fn = f"{output_folder}/{pdbname}.pkl"
     tag = pdbname
-    selected_structure = 'IgFold'
+    selected_structure = "IgFold"
     select_index = 0
-    dat = _read_pickle_select(fn, structure_mode=selected_structure, model_index=select_index)
+    dat = _read_pickle_select(
+        fn, structure_mode=selected_structure, model_index=select_index
+    )
     if not ag_remove:
         ag_remove_prob = 0
     else:
         ag_remove_prob = 1
     dat = chain_tagging(
-            tag,
-            dat,
-            mode='ab',
-            ag_remove_prob=ag_remove_prob,
-            ulr_type=['H_3'],
-            inference_n_residue_extension=0,
-            build_all_cdr = False,
-        )
+        tag,
+        dat,
+        mode="ab",
+        ag_remove_prob=ag_remove_prob,
+        ulr_type=["H_3"],
+        inference_n_residue_extension=0,
+        build_all_cdr=False,
+    )
     new_dat = {}
     for key in dat.keys():
         if key in ["tot_ulr", "tot_ulr_range", "ulr_range"]:
             continue
         new_dat[key] = dat[key]
-    
-    mode = 'ab'
+
+    mode = "ab"
     with torch.no_grad():
         input_dic = preprocess_input(
-                dat = new_dat,
-                mode = mode,
-                seed_size = seed_size,
-                trans_scale = trans_scale_factor,
-                n_crop = n_crop,
-                build_from_scratch = build_from_scratch
-            )
+            dat=new_dat,
+            mode=mode,
+            seed_size=seed_size,
+            trans_scale=trans_scale_factor,
+            n_crop=n_crop,
+            build_from_scratch=build_from_scratch,
+        )
     input_dic = collate_batch(input_dic)
     return input_dic, tag, mode
-        
-

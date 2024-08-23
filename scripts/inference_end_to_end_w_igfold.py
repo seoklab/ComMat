@@ -6,6 +6,7 @@ import torch.multiprocessing
 from collections import defaultdict
 from pathlib import Path
 from typing import DefaultDict
+from featurizing import prep_af2_inp
 
 ##
 # from apex.optimizers import FusedAdam, FusedLAMB
@@ -146,22 +147,24 @@ if __name__ == "__main__":
                     chain = line[1:].strip()
                 else:
                     sequences[chain] += line.strip()
-
+        pdbname = Path(args.fasta_path).stem
         if not Path(output_folder).exists():
             Path(output_folder).mkdir(exist_ok=True)
         igfold = IgFoldRunner()
         igfold.fold(
-            f"{output_folder}/igfold.pdb",
+            f"{output_folder}/{pdbname}_igfold.pdb",
             sequences=sequences,
             do_refine=False,
             do_renum=False,
         )
         test_pdb = f"{output_folder}/igfold.pdb"
 
+    prep_af2_inp(test_pdb, pdbname, output_path=output_folder)
     #### TODO: Make data processing part ###
     pdbname = Path(args.fasta_path).stem
     input_dic, tag, mode = data_preprocess_temp(
         pdbname,
+        output_folder,
         ag_remove=True,
         seed_size=args.test_seed_size,
         trans_scale_factor=10.0,
@@ -184,6 +187,7 @@ if __name__ == "__main__":
     )
 
     ### Align predicted structure to IgFold structure ###
+
     igfold_file = f"{output_folder}/igfold.pdb"
     commat_file = f"{output_folder}/{tag}.pdb"
     write_aligned_pdb(
