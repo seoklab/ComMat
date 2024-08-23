@@ -14,6 +14,20 @@ def get_fasta_dict(fasta_file):
     return seq_dict
 
 
+def get_new_pdb(file, lenh):
+    newline = []
+    with open(file) as f_in:
+        lines = f_in.readlines()
+        for line in lines:
+            if (line.startswith("ATOM") or line.startswith("TER")) and line[21] == "L":
+                new_resno = int(line[22:26].strip()) - lenh
+                new = f"{line[:22]}{new_resno:4d}{line[26:]}"
+                newline.append(new)
+            else:
+                newline.append(line)
+    return newline
+
+
 def align_commat_to_igfold(pdbname, commat_file, igfold_file):
     pdb, hchain, lchain, agchain = pdbname.split("_")
 
@@ -21,10 +35,7 @@ def align_commat_to_igfold(pdbname, commat_file, igfold_file):
     f_commat = open(commat_file)
     commat_lines = f_commat.readlines()
 
-    if hchain > lchain:
-        chain_match = {"A": hchain, "B": lchain}
-    else:
-        chain_match = {"A": hchain, "B": lchain}
+    chain_match = {"A": "H", "B": "L"}
 
     commat_coord_one_model = defaultdict(lambda: defaultdict(list))
     for line in commat_lines:
@@ -73,20 +84,19 @@ def align_commat_to_igfold(pdbname, commat_file, igfold_file):
 
 def write_aligned_pdb(pdbname, commat_file, igfold_file, output_folder):
     commat_aligned_coord = align_commat_to_igfold(pdbname, commat_file, igfold_file)
-
-    # for k, v in commat_aligned_coord.items():  # MODEL No
-    #     Path(pdbname).mkdir(exist_ok=True)
-    #     with open(f"{pdbname}/{pdbname}_{k}.pdb", "w") as f_out:
-    #         for ch, v1 in v.items():
-    #             for resno, v2 in v1.items():
-    #                 f_out.writelines(v2)
-    #             f_out.write("TER\n")
-    with open(f"{output_folder}/{pdbname}_multiple_aligned.pdb", "w") as f_out:
-        for k, v in commat_aligned_coord.items():
-            f_out.write(f"MODEL {k}\n")
+    Path(f"{output_folder}/unrelaxed").mkdir(exist_ok=True)
+    for k, v in commat_aligned_coord.items():  # MODEL No
+        with open(f"{output_folder}/unrelaxed/{pdbname}_{k}.pdb", "w") as f_out:
             for ch, v1 in v.items():
                 for resno, v2 in v1.items():
                     f_out.writelines(v2)
-            f_out.write("TER\n")
-            f_out.write("END\n")
-            f_out.write("ENDMDL\n")
+                f_out.write("TER\n")
+    # with open(f"{output_folder}/{pdbname}_multiple_aligned.pdb", "w") as f_out:
+    #     for k, v in commat_aligned_coord.items():
+    #         f_out.write(f"MODEL {k}\n")
+    #         for ch, v1 in v.items():
+    #             for resno, v2 in v1.items():
+    #                 f_out.writelines(v2)
+    #         f_out.write("TER\n")
+    #         f_out.write("END\n")
+    #         f_out.write("ENDMDL\n")

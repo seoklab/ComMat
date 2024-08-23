@@ -7,6 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import DefaultDict
 from featurizing import prep_af2_inp
+from align_to_modeled import get_fasta_dict, get_new_pdb
 
 ##
 # from apex.optimizers import FusedAdam, FusedLAMB
@@ -32,7 +33,7 @@ from utils import (
     get_post_prediction_pdb_ranked,
 )
 from align_to_modeled import write_aligned_pdb
-from local_optimize import run_input_multiple
+from local_optimize import run_input_multiple, run_input_indiv
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -157,7 +158,13 @@ if __name__ == "__main__":
             do_refine=False,
             do_renum=False,
         )
-        test_pdb = f"{output_folder}/igfold.pdb"
+        hchain_length = len(
+            get_fasta_dict(f"{output_folder}/{pdbname}_igfold.fasta")["H"]
+        )
+        new_pdb = get_new_pdb(f"{output_folder}/{pdbname}_igfold.pdb", hchain_length)
+        with open(f"{output_folder}/igfold_renumbered.pdb", "w") as f_out:
+            f_out.writelines(new_pdb)
+        test_pdb = f"{output_folder}/{pdbname}_igfold.pdb"
 
     prep_af2_inp(test_pdb, pdbname, output_path=output_folder)
     #### TODO: Make data processing part ###
@@ -188,7 +195,7 @@ if __name__ == "__main__":
 
     ### Align predicted structure to IgFold structure ###
 
-    igfold_file = f"{output_folder}/igfold.pdb"
+    igfold_file = f"{output_folder}/igfold_renumbered.pdb"
     commat_file = f"{output_folder}/{tag}.pdb"
     write_aligned_pdb(
         pdbname,
@@ -198,8 +205,12 @@ if __name__ == "__main__":
     )
 
     ### relax with GalaxyLocalOptimize ###
-    run_input_multiple(pdbname, output_folder)
+    seed_size = args.test_seed_size
+    for i in range(seed_size):
+        run_input_indiv(pdbname, i, output_folder)
+    # run_input_multiple(pdbname, output_folder)
 
     ### ranking with AF2Rank ###
+    os.system('python3 scripts/0424_get_tmscore.py --name {pdbname} --chain H,L --decoy_dir {output_folder}/relaxed --model_num 5')
 
     logging.info("Inference finished successfully")

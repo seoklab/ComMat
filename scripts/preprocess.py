@@ -259,8 +259,9 @@ def data_preprocess_temp(
     build_from_scratch,
 ):
     fn = f"{output_folder}/{pdbname}.pkl"
+    # fn = "/home/dngusdnr1/libs/tmp/ComMat/test_0821/input_processing_from_hu/7sn1_H_L_#_merged.dat"
     tag = pdbname
-    selected_structure = "IgFold"
+    selected_structure = "crystal"
     select_index = 0
     dat = _read_pickle_select(
         fn, structure_mode=selected_structure, model_index=select_index

@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 
 
-def write_input_indiv(pdbname, num):
+def run_input_indiv(pdbname, num, output_folder):
+    Path(f"{output_folder}/relaxed").mkdir(exist_ok=True)
+    Path(f"{output_folder}/relaxation_scripts").mkdir(exist_ok=True)
     input_line = """data_directory        /applic/Galaxy/current/data
 top_type              polarh
 weight_type           Prot2016
@@ -15,11 +18,19 @@ read_multiple_models  yes
 local_optimize_relax     yes
 local_optimize_sidechain no """
 
-    input_line = input_line.replace("@P", f"{pdbname}_{num}.pdb")
-    input_line = input_line.replace("@O", f"{pdbname}_relaxed_{num}")
-
-    with open(f"{pdbname}/scripts/local_optimize_{num}.in", "w") as f_out:
+    input_line = input_line.replace(
+        "@P", f"{output_folder}/unrelaxed/{pdbname}_{num}.pdb"
+    )
+    input_line = input_line.replace(
+        "@O", f"{output_folder}/relaxed/{pdbname}_relaxed_{num}"
+    )
+    with open(
+        f"{output_folder}/relaxation_scripts/local_optimize_{num}.in", "w"
+    ) as f_out:
         f_out.write(input_line)
+    os.system(
+        f"mpiexec src/galaxylocalopt/bin/local_optimize.mpi {output_folder}/relaxation_scripts/local_optimize_{num}.in"
+    )
 
 
 def run_input_multiple(pdbname, output_folder):

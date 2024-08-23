@@ -12,6 +12,7 @@ import time, pickle
 import multiprocessing as mp
 import tempfile
 import esm
+from pathlib import Path
 
 CDR_DIC = {}
 CDR_DIC["H"] = {
@@ -81,7 +82,7 @@ def parse_anarci_out_to_cdr_range(fn, input_pdb_seq, chain):
         if not aligned_qeury_aa_type == "-":
             residue_number += 1
         cdr_type = chothia_number_to_cdr_type(chothia_number, chain)
-        if not cdr_type == None:
+        if not cdr_type is None:
             cdr_type_resno_dic[cdr_type].append(
                 residue_number - 1
             )  # python indexing start with 0~
@@ -92,6 +93,7 @@ def modify_pdb_with_anarci_aligened_sequence(
     pdb_fn,
     str_seq_dic,
     aligned_seq_dic,
+    output_path,
 ):
     lines = open(pdb_fn).readlines()
     lines = [line for line in lines if line.startswith("ATOM")]
@@ -112,7 +114,7 @@ def modify_pdb_with_anarci_aligened_sequence(
             new_res_no = res_no - (start_res_no - 1)
             line = line[:22] + "%4i" % (new_res_no) + line[26:]
             filtered_lines.append(line)
-        with open(f"{chain}.pdb", "wt") as fp:
+        with open(f"{output_path}/{chain}.pdb", "wt") as fp:
             fp.writelines(filtered_lines)
 
 
@@ -120,8 +122,9 @@ def mapping_cdr_region_and_modify_pdb(pdb_fn, output_path):
     fasta_dic = read_pdb_write_seq(pdb_fn, out_fn=f"{output_path}/output.fa")
     print("hello")
     os.system(
-        f"{EXEC_ANARCI_PATH} -i {output_path}/output.fa -s c -o {output_path}/anarci.out -hp bin --csv"
+        f"{EXEC_ANARCI_PATH} -i {output_path}/output.fa -s c -o {output_path}/anarci.out --csv"
     )
+    print("bye")
     anarci_h_chain_fn = f"{output_path}/anarci.out_H.csv"
     anarci_l_chain_fn = f"{output_path}/anarci.out_KL.csv"
     cdr_H, aligned_H_seq = parse_anarci_out_to_cdr_range(
@@ -137,13 +140,14 @@ def mapping_cdr_region_and_modify_pdb(pdb_fn, output_path):
         pdb_fn=pdb_fn,
         str_seq_dic={"H": fasta_dic["H"], "L": fasta_dic["L"]},
         aligned_seq_dic={"H": aligned_H_seq, "L": aligned_L_seq},
+        output_path=output_path,
     )
     return cdr_resno_mapper, {"H": aligned_H_seq, "L": aligned_L_seq}
 
 
-def prep_single_chain(pdb_fn):
+def prep_single_chain(pdb_fn, output_path):
     ##
-    chain_id = pdb_fn[0]
+    chain_id = Path(pdb_fn).stem
     ##
     my_pipe = dp.DataPipeline(None)
     my_fp = Fp.FeaturePipeline()
@@ -153,9 +157,10 @@ def prep_single_chain(pdb_fn):
         is_distillation=False,
         chain_id=chain_id,
     )
+    print(data)
     feats = my_fp.process_features(data, "train")
     feats["hu_residue_index"] = torch.Tensor(data["hu_residue_index"])
-    with open("single_chain.%s.pkl" % (chain_id), "wb") as fp:
+    with open(f"{output_path}/single_chain.%s.pkl" % (chain_id), "wb") as fp:
         pickle.dump(feats, fp)
     return feats
 
@@ -167,7 +172,7 @@ def padding_for_missing(dic, aa_fa):
     if hu_residue_index.shape[0] == ref.shape[0]:
         return dic
     else:
-        if aa_fa == None:
+        if aa_fa is None:
             print("Require full length of sequence")
             sys.exit()
         ref = torch.arange(1, len(aa_fa) + 1)
@@ -271,8 +276,11 @@ def prep_af2_inp(pdb_fn, pdbname, output_path):
     cdr_resno_mapper, aligned_seq_dic = mapping_cdr_region_and_modify_pdb(
         pdb_fn, output_path
     )
+    print(output_path)
     feats = {
-        single_chain: prep_single_chain(f"{single_chain}.pdb")
+        single_chain: prep_single_chain(
+            f"{output_path}/{single_chain}.pdb", output_path
+        )
         for single_chain in ["H", "L"]
     }
     os.chdir(curr_path)
