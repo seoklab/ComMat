@@ -1,6 +1,8 @@
 name: commat
 channels:
   - conda-forge
+  - nvidia
+  - pytorch
 dependencies:
   - python=3.7
   - pytorch-cuda=11.7
