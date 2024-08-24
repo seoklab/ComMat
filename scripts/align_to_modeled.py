@@ -30,7 +30,6 @@ def get_new_pdb(file, lenh):
 
 def align_commat_to_igfold(pdbname, commat_file, igfold_file):
     pdb, hchain, lchain, agchain = pdbname.split("_")
-
     commat_coord = {}
     f_commat = open(commat_file)
     commat_lines = f_commat.readlines()
@@ -78,7 +77,6 @@ def align_commat_to_igfold(pdbname, commat_file, igfold_file):
                 else:
                     commat_aligned_mono[k1][i] = igfold_coord[k1][i]
         commat_aligned_coord[k] = commat_aligned_mono
-
     return commat_aligned_coord
 
 

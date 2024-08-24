@@ -207,10 +207,6 @@ if __name__ == "__main__":
     ### relax with GalaxyLocalOptimize ###
     seed_size = args.test_seed_size
     for i in range(seed_size):
-        run_input_indiv(pdbname, i, output_folder)
-    # run_input_multiple(pdbname, output_folder)
-
-    ### ranking with AF2Rank ###
-    #os.system('python3 scripts/0424_get_tmscore.py --name {pdbname} --chain H,L --decoy_dir {output_folder}/relaxed --model_num 5')
+        run_input_indiv(pdbname, i + 1, output_folder)
 
     logging.info("Inference finished successfully")
