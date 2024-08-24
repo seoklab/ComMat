@@ -157,7 +157,6 @@ def prep_single_chain(pdb_fn, output_path):
         is_distillation=False,
         chain_id=chain_id,
     )
-    print(data)
     feats = my_fp.process_features(data, "train")
     feats["hu_residue_index"] = torch.Tensor(data["hu_residue_index"])
     with open(f"{output_path}/single_chain.%s.pkl" % (chain_id), "wb") as fp:
