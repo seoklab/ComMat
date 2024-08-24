@@ -211,6 +211,6 @@ if __name__ == "__main__":
     # run_input_multiple(pdbname, output_folder)
 
     ### ranking with AF2Rank ###
-    os.system('python3 scripts/0424_get_tmscore.py --name {pdbname} --chain H,L --decoy_dir {output_folder}/relaxed --model_num 5')
+    #os.system('python3 scripts/0424_get_tmscore.py --name {pdbname} --chain H,L --decoy_dir {output_folder}/relaxed --model_num 5')
 
     logging.info("Inference finished successfully")

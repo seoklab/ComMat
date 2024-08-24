@@ -1,0 +1,33 @@
+name: commat2
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - pytorch-cuda=11.8
+  - pytorch=2.1.*=*cuda*
+  - cuda=11.8
+  - cuda-compiler=11.8
+  - cuda-nvcc=11.8
+  - cudatoolkit=11.8
+  - tqdm
+  - ca-certificates
+  - openssl
+  - pandas
+  - ml-collections
+  - tree
+  - biopython
+  - modelcif
+  - pynvml
+  - scipy
+  - seaborn
+  - hmmer=3.3.2
+  - pip
+  - pip:
+    - dm-tree==0.1.8
+    - biopython==1.79
+    - fair-esm
+    - nvidia-dllogger==0.1.0
+    - igfold==0.4.0
