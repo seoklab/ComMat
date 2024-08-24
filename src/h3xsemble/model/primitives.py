@@ -35,7 +35,7 @@ import torch.nn as nn
 from scipy.stats import truncnorm
 
 from h3xsemble.utils.checkpointing import get_checkpoint_fn
-from h3xsemble.utils.kernel.attention_core import attention_core
+from openfold.utils.kernel.attention_core import attention_core
 from h3xsemble.utils.precision_utils import is_fp16_enabled
 from h3xsemble.utils.tensor_utils import (
     permute_final_dims,
