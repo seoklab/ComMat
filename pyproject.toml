@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ComMat"
 version = "0.1.0"
-description = "Multi-resolution all-atom structure modeling using deep-learning methods"
+description = "Community-based Deep Learning and Antibody H3 Loop Modeling"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [{ name = "Hyeonuk Woo", email = "dngusdnr1@snu.ac.kr"}, { name = "Yubeen Kim", email = "oilbeen@snu.ac.kr"}]
