@@ -117,10 +117,10 @@ if __name__ == "__main__":
     #     logging.info(f"Using seed {args.seed}")
     #     seed_everything(args.seed)
 
-    logger = LoggerCollection(
-        [DLLogger(save_dir=args.log_dir, filename=args.dllogger_name)]
-    )
-
+#    logger = LoggerCollection(
+#        [DLLogger(save_dir=args.log_dir, filename=args.dllogger_name)]
+#    )
+#
     hu_config.model.seed_size = args.test_seed_size
     hu_config.loss.seed_size = args.test_seed_size
     if "build_all_cdr" in hu_config.dataloader:
