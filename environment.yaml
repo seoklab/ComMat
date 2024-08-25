@@ -1,4 +1,4 @@
-name: commat5
+name: commat
 channels:
   - pytorch
   - nvidia
