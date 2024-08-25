@@ -1,4 +1,4 @@
-name: commat2
+name: commat5
 channels:
   - pytorch
   - nvidia
@@ -7,7 +7,7 @@ channels:
 dependencies:
   - python=3.10
   - pytorch-cuda=11.7
-  - pytorch=2.0.*=*cuda*
+  - pytorch=2.0[build=*cuda*]
   - cuda=11.7
   - cuda-compiler=11.7
   - cuda-nvcc=11.7
@@ -24,10 +24,12 @@ dependencies:
   - scipy
   - seaborn
   - hmmer=3.3.2
-  - pip
+  - mkl==2024.0
+  - certifi
   - pip:
     - dm-tree==0.1.8
     - biopython==1.79
     - fair-esm
     - nvidia-dllogger==0.1.0
     - igfold==0.4.0
+prefix: /home/yubeen/conda/envs/commat4
