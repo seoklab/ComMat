@@ -14,16 +14,6 @@ conda env create -f environment.yml [-n <name>]
 Then run the following command.
 
 ```bash
-pip3 install .
-```
-
-Or for "editable" install,
-
-```bash
-pip3 install -e .
-```
-
-```bash
 python3 setup.py install
 ```
 
