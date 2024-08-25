@@ -1,0 +1,12 @@
+data_directory        /applic/Galaxy/current/data
+top_type              polarh
+weight_type           Prot2016
+print_level           30
+energy_print_level    30
+read_multiple_models  yes
+infile_pdb            test_output/unrelaxed/7sn1_H_L_#_20.pdb
+outfile_prefix        test_output/relaxed/7sn1_H_L_#_relaxed_20
+energy_on_full        yes
+read_multiple_models  yes
+local_optimize_relax     yes
+local_optimize_sidechain no 
