@@ -16,7 +16,7 @@ If conda takes too long, it's recommended to use [mamba](https://github.com/cond
 mamba env create -f environment.yml [-n <name>]
 ```
 
-Then run the following command.
+Then run the following command. (Thanks to [Dr.Marc Bianciotto](https://github.com/marcbianciotto))
 
 ```bash
 conda activate commat
