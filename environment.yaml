@@ -30,6 +30,5 @@ dependencies:
     - dm-tree==0.1.8
     - biopython==1.79
     - fair-esm
-    - nvidia-dllogger==0.1.0
     - igfold==0.4.0
 prefix: /home/yubeen/conda/envs/commat4
