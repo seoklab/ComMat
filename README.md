@@ -21,12 +21,9 @@ Then run the following command.
 ```bash
 conda activate commat
 python3 setup.py install
-```
-
-Also, we need the ANARCI tool to renumber antibody sequences. After cloning the repository from the [ANARCI](https://github.com/oxpig/ANARCI), run the following command:
-```bash
-cd ANARCI
-python setup.py install
+pip3 install git+https://github.com/NVIDIA/dllogger#egg=dllogger
+conda install bioconda::anarci
+apt-get install openmpi-bin
 ```
 
 The run_inference.sh script contains an example execution command. 
