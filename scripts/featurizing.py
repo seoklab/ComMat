@@ -69,6 +69,9 @@ def parse_anarci_out_to_cdr_range(fn, input_pdb_seq, chain):
     aligned_query_seq = "".join([x for x in query if not x == "-"])
     # compare sequence from ANARCI & sequence from input structure
     start_index = -1
+    print (input_pdb_seq)
+    print ("----")
+    print (aligned_query_seq)
     try:
         start_index = input_pdb_seq.index(aligned_query_seq)
     except:
@@ -100,7 +103,7 @@ def modify_pdb_with_anarci_aligened_sequence(
     out_dict = defaultdict(list)
     for line in lines:
         out_dict[line[21]].append(line)
-    for chain in ["H", "L"]:
+    for chain in str_seq_dic.keys():
         lines = out_dict[chain]
         start_res_no = int(lines[0][22:26]) + str_seq_dic[chain].index(
             aligned_seq_dic[chain]
@@ -120,22 +123,35 @@ def modify_pdb_with_anarci_aligened_sequence(
 
 def mapping_cdr_region_and_modify_pdb(pdb_fn, output_path):
     fasta_dic = read_pdb_write_seq(pdb_fn, out_fn=f"{output_path}/output.fa")
-    print("hello")
     os.system(
         f"{EXEC_ANARCI_PATH} -i {output_path}/output.fa -s c -o {output_path}/anarci.out --csv"
     )
-    print("bye")
     anarci_h_chain_fn = f"{output_path}/anarci.out_H.csv"
     anarci_l_chain_fn = f"{output_path}/anarci.out_KL.csv"
+    h_only = False
+    if not os.path.exists(anarci_l_chain_fn):
+        h_only = True
+        print ("Only heavy chain is submitted")
     cdr_H, aligned_H_seq = parse_anarci_out_to_cdr_range(
         anarci_h_chain_fn, fasta_dic["H"], "H"
     )
-    cdr_L, aligned_L_seq = parse_anarci_out_to_cdr_range(
-        anarci_l_chain_fn, fasta_dic["L"], "L"
-    )
+    if not h_only:
+        cdr_L, aligned_L_seq = parse_anarci_out_to_cdr_range(
+            anarci_l_chain_fn, fasta_dic["L"], "L"
+        )
     cdr_resno_mapper = {}
     cdr_resno_mapper.update(cdr_H)
-    cdr_resno_mapper.update(cdr_L)
+    if not h_only:
+        cdr_resno_mapper.update(cdr_L)
+    if h_only:
+        modify_pdb_with_anarci_aligened_sequence(
+            pdb_fn=pdb_fn,
+            str_seq_dic={"H": fasta_dic["H"]},
+            aligned_seq_dic={"H": aligned_H_seq},
+            output_path=output_path,
+        )
+        return cdr_resno_mapper, {"H": aligned_H_seq}
+
     modify_pdb_with_anarci_aligened_sequence(
         pdb_fn=pdb_fn,
         str_seq_dic={"H": fasta_dic["H"], "L": fasta_dic["L"]},
@@ -269,29 +285,29 @@ def run_esm(feats):
 def prep_af2_inp(pdb_fn, pdbname, output_path):
     pdb_fn = os.path.abspath(pdb_fn)
     tag = pdbname
-    curr_path = os.popen("pwd").readlines()[0].strip("\n")
-    # with tempfile.TemporaryDirectory() as tmpdir:
-    #     os.chdir(tmpdir)
+    #curr_path = os.popen("pwd").readlines()[0].strip("\n")
+    #with tempfile.TemporaryDirectory() as tmpdir:
+    #    os.chdir(tmpdir)
     cdr_resno_mapper, aligned_seq_dic = mapping_cdr_region_and_modify_pdb(
         pdb_fn, output_path
     )
-    print(output_path)
     feats = {
         single_chain: prep_single_chain(
             f"{output_path}/{single_chain}.pdb", output_path
         )
-        for single_chain in ["H", "L"]
+        for single_chain in aligned_seq_dic.keys() 
     }
-    os.chdir(curr_path)
-    for chain_idx, chain in enumerate(["H", "L"]):
+    #os.chdir(curr_path)
+    for chain_idx, chain in enumerate(list(feats.keys())):
         feats[chain] = padding_for_missing(feats[chain], aligned_seq_dic[chain])
         feats[chain]["chain_id"] = (
             torch.zeros(feats[chain]["aatype"].shape[0]).long().fill_(chain_idx)
         )
     merged_feats = defaultdict(list)
-    for key, item in feats["H"].items():
-        merged_feats[key].append(feats["H"][key])
-        merged_feats[key].append(feats["L"][key])
+    for chain in feats.keys():
+        for key, item in feats[chain].items():
+            merged_feats[key].append(feats[chain][key])
+    for key, item in feats[chain].items():
         merged_feats[key] = torch.cat(merged_feats[key], dim=0)
     #
     len_h = feats["H"]["aatype"].shape[0]
