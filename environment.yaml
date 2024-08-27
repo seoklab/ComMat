@@ -31,4 +31,4 @@ dependencies:
     - biopython==1.79
     - fair-esm
     - igfold==0.4.0
-prefix: /home/yubeen/conda/envs/commat4
+prefix: /home/yubeen/conda/envs/commat
