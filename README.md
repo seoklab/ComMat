@@ -27,6 +27,7 @@ apt-get install openmpi-bin
 ```
 
 The run_inference.sh script contains an example execution command. 
+The FASTA file should follow the format {pdbname}_{Hchain}_{Lchain}_{antigen_chain}. For example, if the PDB ID is 7sn1 and only the H chain is present in the FASTA file, the input file should be named 7sn1_H_#_#.fa. If both the H and L chains are present, the file should be named 7sn1_H_L_#.fa. If the antigen chain is A, the file name should be 7sn1_H_L_A.fasta.
 When you provide a FASTA file and a seed size, the script generates different structures up to the specified seed size and outputs them in the output_folder/relaxed directory with ranking labels. For instance, if the file is named relaxed/7sn1_H_L_#_1.pdb, it indicates that this structure has a ranking of 1. If you want to quickly obtain unrelaxed structures and use a separate relaxation tool, you can use the outputs in the output_folder/unrelaxed directory.
 
 Due to technical issues, the AF2rank tool could not be included, but you can download and use it from [ColabDesign](https://github.com/sokrypton/ColabDesign) if needed.
