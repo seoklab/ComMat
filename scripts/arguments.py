@@ -189,6 +189,15 @@ PARSER.add_argument(
     "--output_path", type=str, default=None, help="path for output files"
 )
 PARSER.add_argument(
+    "--local_optimize", action='store_true', default=True, help='perform local optimize'
+)
+PARSER.add_argument(
+    "--localopt_data_path", type=str, default=None, help="path for localopt data"
+)
+PARSER.add_argument(
+    "--localopt_exec_path", type=str, default=None, help="path for localopt executable"
+)
+PARSER.add_argument(
     "--using_post_kabsch",
     type=str2bool,
     nargs="?",

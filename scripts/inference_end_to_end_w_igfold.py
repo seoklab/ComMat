@@ -205,8 +205,9 @@ if __name__ == "__main__":
     )
 
     ### relax with GalaxyLocalOptimize ###
-    seed_size = args.test_seed_size
-    for i in range(seed_size):
-        run_input_indiv(pdbname, i + 1, output_folder)
+    if args.local_optimize:
+        seed_size = args.test_seed_size
+        for i in range(seed_size):
+            run_input_indiv(pdbname, i + 1, output_folder, args.localopt_data_path, args.localopt_exec_path)
 
     logging.info("Inference finished successfully")

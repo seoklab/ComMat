@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 
-def run_input_indiv(pdbname, num, output_folder):
+def run_input_indiv(pdbname, num, output_folder, localopt_data_path, localopt_exec_path):
     Path(f"{output_folder}/relaxed").mkdir(exist_ok=True)
     Path(f"{output_folder}/relaxation_scripts").mkdir(exist_ok=True)
-    input_line = """data_directory        /applic/Galaxy/current/data
+    input_line = f"""data_directory        {localopt_data_path}
 top_type              polarh
 weight_type           Prot2016
 print_level           30
@@ -29,7 +29,7 @@ local_optimize_sidechain no """
     ) as f_out:
         f_out.write(input_line)
     os.system(
-        f"mpiexec src/galaxylocalopt/bin/local_optimize.mpi {output_folder}/relaxation_scripts/local_optimize_{num}.in"
+        f"{localopt_exec_path} {output_folder}/relaxation_scripts/local_optimize_{num}.in"
     )
 
 
@@ -54,5 +54,5 @@ local_optimize_sidechain no """
     with open(f"{output_folder}/local_optimize.in", "w") as f_out:
         f_out.write(input_line)
     os.system(
-        f"mpiexec src/galaxylocalopt/bin/local_optimize.mpi {output_folder}/local_optimize.in"
+        f"src/galaxylocalopt/bin/local_optimize {output_folder}/local_optimize.in"
     )
